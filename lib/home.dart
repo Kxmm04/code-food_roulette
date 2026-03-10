@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 import 'login.dart';
 import 'roulette_conditions.dart';
@@ -20,6 +22,9 @@ class _HomeScreenState extends State<HomeScreen> {
   String token = '';
   bool isLoading = true;
 
+  int savedRestaurantCount = 0;
+  bool isCheckingSaved = true;
+
   @override
   void initState() {
     super.initState();
@@ -28,12 +33,46 @@ class _HomeScreenState extends State<HomeScreen> {
 
   Future<void> loadUser() async {
     final prefs = await SharedPreferences.getInstance();
+    fullName = prefs.getString('user_full_name') ?? '';
+    email = prefs.getString('user_email') ?? '';
+    token = prefs.getString('token') ?? '';
+
+    await fetchSavedRestaurantCount();
+
+    if (!mounted) return;
     setState(() {
-      fullName = prefs.getString('user_full_name') ?? '';
-      email = prefs.getString('user_email') ?? '';
-      token = prefs.getString('token') ?? '';
       isLoading = false;
     });
+  }
+
+  Future<void> fetchSavedRestaurantCount() async {
+    if (token.isEmpty) {
+      savedRestaurantCount = 0;
+      isCheckingSaved = false;
+      return;
+    }
+
+    try {
+      final url = Uri.parse(
+        "http://172.24.150.118/food_roulette_api/my_saved_restaurants.php",
+      );
+
+      final response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer $token"},
+      );
+
+      final result = json.decode(response.body);
+
+      if (!mounted) return;
+
+      savedRestaurantCount = (result["saved_restaurants"] ?? []).length;
+      isCheckingSaved = false;
+    } catch (e) {
+      if (!mounted) return;
+      savedRestaurantCount = 0;
+      isCheckingSaved = false;
+    }
   }
 
   Future<void> logout() async {
@@ -49,16 +88,21 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  void openPage(Widget page) {
-    Navigator.push(
+  Future<void> openPage(Widget page) async {
+    await Navigator.push(
       context,
       MaterialPageRoute(builder: (_) => page),
     );
+
+    await fetchSavedRestaurantCount();
+    if (!mounted) return;
+    setState(() {});
   }
 
   @override
   Widget build(BuildContext context) {
     final displayName = fullName.isNotEmpty ? fullName : 'ผู้ใช้งาน';
+    final canRoulette = savedRestaurantCount >= 2;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F3),
@@ -161,15 +205,24 @@ class _HomeScreenState extends State<HomeScreen> {
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
-                      gradient: const LinearGradient(
-                        colors: [Color(0xFFFF6B35), Color(0xFFFF7A45)],
-                        begin: Alignment.topLeft,
-                        end: Alignment.bottomRight,
-                      ),
+                      gradient: canRoulette
+                          ? const LinearGradient(
+                              colors: [Color(0xFFFF6B35), Color(0xFFFF7A45)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : const LinearGradient(
+                              colors: [Color(0xFFBDBDBD), Color(0xFF9E9E9E)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                       borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
-                          color: const Color(0xFFFF6B35).withOpacity(0.28),
+                          color: (canRoulette
+                                  ? const Color(0xFFFF6B35)
+                                  : Colors.grey)
+                              .withOpacity(0.20),
                           blurRadius: 22,
                           offset: const Offset(0, 12),
                         ),
@@ -194,11 +247,11 @@ class _HomeScreenState extends State<HomeScreen> {
                               ),
                             ),
                             const SizedBox(width: 14),
-                            const Expanded(
+                            Expanded(
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
+                                  const Text(
                                     'สุ่มอาหาร • กินอะไรดี',
                                     style: TextStyle(
                                       color: Colors.white,
@@ -206,10 +259,12 @@ class _HomeScreenState extends State<HomeScreen> {
                                       fontWeight: FontWeight.w800,
                                     ),
                                   ),
-                                  SizedBox(height: 6),
+                                  const SizedBox(height: 6),
                                   Text(
-                                    'ตั้งงบประมาณ ระยะทาง และให้ระบบช่วยเลือกเมนูที่เหมาะกับคุณ',
-                                    style: TextStyle(
+                                    canRoulette
+                                        ? 'ตั้งงบประมาณ ระยะทาง และให้ระบบช่วยเลือกเมนูที่เหมาะกับคุณ'
+                                        : 'ต้องมีร้านที่บันทึกไว้อย่างน้อย 2 ร้านก่อน จึงจะเริ่มสุ่มอาหารได้',
+                                    style: const TextStyle(
                                       color: Colors.white,
                                       fontSize: 12.5,
                                       height: 1.4,
@@ -220,30 +275,66 @@ class _HomeScreenState extends State<HomeScreen> {
                             ),
                           ],
                         ),
+                        const SizedBox(height: 12),
+
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.18),
+                            borderRadius: BorderRadius.circular(99),
+                          ),
+                          child: Text(
+                            isCheckingSaved
+                                ? 'กำลังตรวจสอบร้านที่บันทึกไว้...'
+                                : 'ร้านที่บันทึกไว้ $savedRestaurantCount ร้าน',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+
                         const SizedBox(height: 18),
+
                         SizedBox(
                           width: double.infinity,
                           height: 56,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.white,
-                              foregroundColor: const Color(0xFFFF6B35),
+                              backgroundColor: canRoulette
+                                  ? Colors.white
+                                  : Colors.grey.shade300,
+                              foregroundColor: canRoulette
+                                  ? const Color(0xFFFF6B35)
+                                  : Colors.grey.shade600,
                               elevation: 0,
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(18),
                               ),
                             ),
-                            icon: const Icon(Icons.arrow_forward_rounded),
-                            label: const Text(
-                              'เริ่มสุ่มอาหารตอนนี้',
-                              style: TextStyle(
+                            icon: Icon(
+                              canRoulette
+                                  ? Icons.arrow_forward_rounded
+                                  : Icons.lock_outline_rounded,
+                            ),
+                            label: Text(
+                              canRoulette
+                                  ? 'เริ่มสุ่มอาหารตอนนี้'
+                                  : 'ยังสุ่มไม่ได้',
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
-                            onPressed: () {
-                              openPage(const RouletteConditionsScreen());
-                            },
+                            onPressed: (!canRoulette || isCheckingSaved)
+                                ? null
+                                : () {
+                                    openPage(const RouletteConditionsScreen());
+                                  },
                           ),
                         ),
                       ],
@@ -282,8 +373,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
                   Row(
                     children: [
-               
-                      const SizedBox(width: 12),
                       Expanded(
                         child: _MenuButtonCard(
                           title: 'ประวัติการกิน',
@@ -322,21 +411,25 @@ class _HomeScreenState extends State<HomeScreen> {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        const Expanded(
+                        Expanded(
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Text(
+                              const Text(
                                 'แนะนำการใช้งาน',
                                 style: TextStyle(fontWeight: FontWeight.bold),
                               ),
-                              SizedBox(height: 4),
+                              const SizedBox(height: 4),
                               Text(
-                                '1) บันทึกร้านอาหาร\n'
-                                '2) เพิ่มเมนูให้ร้าน\n'
-                                '3) ไปที่สุ่มอาหาร\n'
-                                '4) บันทึกประวัติการกินได้ภายหลัง',
-                                style: TextStyle(
+                                canRoulette
+                                    ? '1) บันทึกร้านอาหาร\n'
+                                      '2) เพิ่มเมนูให้ร้าน\n'
+                                      '3) ไปที่สุ่มอาหาร\n'
+                                      '4) บันทึกประวัติการกินได้ภายหลัง'
+                                    : '1) บันทึกร้านอาหารอย่างน้อย 2 ร้าน\n'
+                                      '2) เพิ่มเมนูให้แต่ละร้าน\n'
+                                      '3) แล้วค่อยไปที่สุ่มอาหาร',
+                                style: const TextStyle(
                                   fontSize: 12,
                                   color: Colors.black54,
                                   height: 1.45,
