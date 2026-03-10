@@ -30,7 +30,7 @@ class _AddMenuPageState extends State<AddMenuPage> {
       return;
     }
 
-    var url = Uri.parse("http://172.24.148.250/food_roulette_api/add_menu.php");
+    var url = Uri.parse("http://172.24.150.118/food_roulette_api/add_menu.php");
 
     var response = await http.post(
       url,

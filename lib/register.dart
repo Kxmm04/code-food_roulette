@@ -16,7 +16,7 @@ class _RegisterPageState extends State<RegisterPage> {
 
   Future<void> register() async {
     var url = Uri.parse(
-      "http://172.24.148.250/food_roulette_api/register.php",
+      "http://172.24.150.118/food_roulette_api/register.php",
     );
 
     try {

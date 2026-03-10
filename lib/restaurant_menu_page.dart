@@ -26,7 +26,7 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
 
   Future<void> fetchMenus() async {
     var url = Uri.parse(
-      "http://172.24.148.250/food_roulette_api/menus_list.php?restaurant_id=${widget.restaurantId}",
+      "http://172.24.150.118/food_roulette_api/menus_list.php?restaurant_id=${widget.restaurantId}",
     );
 
     var response = await http.get(

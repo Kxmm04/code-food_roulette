@@ -35,7 +35,7 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
   Future<void> fetchSavedRestaurants() async {
     try {
       final url = Uri.parse(
-        "http://172.24.148.250/food_roulette_api/my_saved_restaurants.php",
+        "http://172.24.150.118/food_roulette_api/my_saved_restaurants.php",
       );
 
       final response = await http.get(
@@ -122,7 +122,7 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
 
   Future<void> saveRestaurant(String name, String address) async {
     var url = Uri.parse(
-      "http://172.24.148.250/food_roulette_api/save_restaurant.php",
+      "http://172.24.150.118/food_roulette_api/save_restaurant.php",
     );
 
     try {

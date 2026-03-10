@@ -15,7 +15,7 @@ class RouletteScreen extends StatefulWidget {
 }
 
 class _RouletteScreenState extends State<RouletteScreen> {
-  final String apiBase = 'http://172.24.148.250/food_roulette_api';
+  final String apiBase = 'http://172.24.150.118/food_roulette_api';
 
   final TextEditingController budgetMinController =
       TextEditingController(text: '50');
