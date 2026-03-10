@@ -97,7 +97,7 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
       await fetchSavedRestaurants();
 
       var url = Uri.parse(
-        "https://overpass-api.de/api/interpreter?data=[out:json];node(around:800,$userLat,$userLng)[amenity=restaurant];out;",
+        "https://overpass-api.de/api/interpreter?data=[out:json];node(around:2000,$userLat,$userLng)[amenity=restaurant];out;",
       );
 
       var response = await http.get(url);

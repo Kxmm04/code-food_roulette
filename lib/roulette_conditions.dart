@@ -34,69 +34,69 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
   }
 
   Future<void> getCurrentLocation() async {
-  setState(() {
-    isLoadingGps = true;
-    message = '';
-  });
-
-  try {
-    final enabled = await Geolocator.isLocationServiceEnabled();
-    if (!enabled) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('กรุณาเปิด GPS ก่อน')),
-      );
-      return;
-    }
-
-    var permission = await Geolocator.checkPermission();
-    if (permission == LocationPermission.denied) {
-      permission = await Geolocator.requestPermission();
-    }
-    if (permission == LocationPermission.denied) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('ไม่ได้รับสิทธิ์ตำแหน่ง')),
-      );
-      return;
-    }
-    if (permission == LocationPermission.deniedForever) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('สิทธิ์ตำแหน่งถูกปฏิเสธถาวร กรุณาเปิดใน Settings'),
-        ),
-      );
-      return;
-    }
-
-    final pos = await Geolocator.getCurrentPosition(
-      desiredAccuracy: LocationAccuracy.high,
-    );
-
     setState(() {
-      userLat = pos.latitude;
-      userLng = pos.longitude;
+      isLoadingGps = true;
+      message = '';
     });
 
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('ดึงพิกัด GPS สำเร็จแล้ว'),
-        backgroundColor: Colors.green,
-      ),
-    );
-  } catch (e) {
-    if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text('ดึง GPS ไม่สำเร็จ: $e'),
-        backgroundColor: Colors.red,
-      ),
-    );
-  } finally {
-    if (mounted) {
-      setState(() => isLoadingGps = false);
+    try {
+      final enabled = await Geolocator.isLocationServiceEnabled();
+      if (!enabled) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('กรุณาเปิด GPS ก่อน')),
+        );
+        return;
+      }
+
+      var permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+      }
+      if (permission == LocationPermission.denied) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('ไม่ได้รับสิทธิ์ตำแหน่ง')),
+        );
+        return;
+      }
+      if (permission == LocationPermission.deniedForever) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('สิทธิ์ตำแหน่งถูกปฏิเสธถาวร กรุณาเปิดใน Settings'),
+          ),
+        );
+        return;
+      }
+
+      final pos = await Geolocator.getCurrentPosition(
+        desiredAccuracy: LocationAccuracy.high,
+      );
+
+      setState(() {
+        userLat = pos.latitude;
+        userLng = pos.longitude;
+      });
+
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('ดึงพิกัด GPS สำเร็จแล้ว'),
+          backgroundColor: Colors.green,
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('ดึง GPS ไม่สำเร็จ: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => isLoadingGps = false);
+      }
     }
   }
-}
 
   void goNext() {
     final budgetMin = int.tryParse(budgetMinController.text.trim());
@@ -138,10 +138,12 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
     required String label,
     required String hint,
     required IconData icon,
+    String? suffixText,
   }) {
     return InputDecoration(
       labelText: label,
       hintText: hint,
+      suffixText: suffixText,
       prefixIcon: Icon(icon, color: const Color(0xFFFF6B35)),
       filled: true,
       fillColor: const Color(0xFFF9FAFB),
@@ -158,13 +160,18 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
         borderRadius: BorderRadius.circular(18),
         borderSide: const BorderSide(color: Color(0xFFFF6B35), width: 1.6),
       ),
-      labelStyle: const TextStyle(fontWeight: FontWeight.w500),
+      labelStyle: const TextStyle(fontWeight: FontWeight.w600),
+      hintStyle: TextStyle(color: Colors.grey.shade500),
     );
   }
 
   @override
   Widget build(BuildContext context) {
     final hasLocation = userLat != null && userLng != null;
+    final budgetText =
+        '${budgetMinController.text.isEmpty ? "-" : budgetMinController.text} - ${budgetMaxController.text.isEmpty ? "-" : budgetMaxController.text} บาท';
+    final distanceText =
+        '${maxDistanceController.text.isEmpty ? "-" : maxDistanceController.text} กม.';
 
     return Scaffold(
       backgroundColor: const Color(0xFFFFF8F3),
@@ -174,18 +181,17 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
             _TopBar(context: context),
             Expanded(
               child: ListView(
-                padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+                padding: const EdgeInsets.fromLTRB(16, 10, 16, 28),
                 children: [
-                  // HERO
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
                       gradient: const LinearGradient(
-                        colors: [Color(0xFFFF8A3D), Color(0xFFFF5A2A)],
+                        colors: [Color(0xFFFF914D), Color(0xFFFF5E3A)],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(28),
+                      borderRadius: BorderRadius.circular(30),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFFFF6B35).withOpacity(0.25),
@@ -194,51 +200,73 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                         ),
                       ],
                     ),
-                    child: Row(
+                    child: Column(
                       children: [
-                        Container(
-                          width: 68,
-                          height: 68,
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.18),
-                            borderRadius: BorderRadius.circular(22),
-                          ),
-                          child: const Icon(
-                            Icons.tune_rounded,
-                            color: Colors.white,
-                            size: 34,
-                          ),
+                        Row(
+                          children: [
+                            Container(
+                              width: 72,
+                              height: 72,
+                              decoration: BoxDecoration(
+                                color: Colors.white.withOpacity(0.18),
+                                borderRadius: BorderRadius.circular(24),
+                              ),
+                              child: const Icon(
+                                Icons.tune_rounded,
+                                color: Colors.white,
+                                size: 36,
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'ตั้งเงื่อนไขการสุ่ม',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 21,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  SizedBox(height: 6),
+                                  Text(
+                                    'กำหนดงบ ระยะทาง และตำแหน่ง\nเพื่อหาร้านและเมนูที่เหมาะกับคุณ',
+                                    style: TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 12.5,
+                                      height: 1.45,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
                         ),
-                        const SizedBox(width: 16),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'ตั้งเงื่อนไขการสุ่ม',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 20,
-                                  fontWeight: FontWeight.w800,
-                                ),
+                        const SizedBox(height: 18),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: _HeroInfoChip(
+                                icon: Icons.payments_rounded,
+                                text: budgetText,
                               ),
-                              SizedBox(height: 6),
-                              Text(
-                                'เลือกงบประมาณ ระยะทาง และตำแหน่งของคุณ\nเพื่อหาร้านและเมนูที่เหมาะที่สุด',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 12.5,
-                                  height: 1.45,
-                                ),
+                            ),
+                            const SizedBox(width: 10),
+                            Expanded(
+                              child: _HeroInfoChip(
+                                icon: Icons.route_rounded,
+                                text: distanceText,
                               ),
-                            ],
-                          ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  const SizedBox(height: 22),
 
                   const Padding(
                     padding: EdgeInsets.only(left: 4, bottom: 10),
@@ -246,7 +274,7 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                       'กำหนดข้อมูลที่ต้องการ',
                       style: TextStyle(
                         fontSize: 17,
-                        fontWeight: FontWeight.w700,
+                        fontWeight: FontWeight.w800,
                         color: Color(0xFF1F2937),
                       ),
                     ),
@@ -267,7 +295,9 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                             label: 'งบต่ำสุด',
                             hint: 'เช่น 50',
                             icon: Icons.keyboard_double_arrow_down_rounded,
+                            suffixText: 'บาท',
                           ),
+                          onChanged: (_) => setState(() {}),
                         ),
                         const SizedBox(height: 12),
                         TextField(
@@ -277,7 +307,9 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                             label: 'งบสูงสุด',
                             hint: 'เช่น 100',
                             icon: Icons.keyboard_double_arrow_up_rounded,
+                            suffixText: 'บาท',
                           ),
+                          onChanged: (_) => setState(() {}),
                         ),
                       ],
                     ),
@@ -296,16 +328,17 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                       keyboardType:
                           const TextInputType.numberWithOptions(decimal: true),
                       decoration: _inputDecoration(
-                        label: 'ระยะทางสูงสุด (กม.)',
+                        label: 'ระยะทางสูงสุด',
                         hint: 'เช่น 5 หรือ 10',
                         icon: Icons.route_rounded,
+                        suffixText: 'กม.',
                       ),
+                      onChanged: (_) => setState(() {}),
                     ),
                   ),
 
                   const SizedBox(height: 14),
 
-                  // GPS CARD
                   Container(
                     padding: const EdgeInsets.all(18),
                     decoration: BoxDecoration(
@@ -314,7 +347,7 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
-                      borderRadius: BorderRadius.circular(26),
+                      borderRadius: BorderRadius.circular(28),
                       boxShadow: [
                         BoxShadow(
                           color: const Color(0xFF2563EB).withOpacity(0.20),
@@ -328,8 +361,8 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                         Row(
                           children: [
                             Container(
-                              width: 56,
-                              height: 56,
+                              width: 58,
+                              height: 58,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.16),
                                 borderRadius: BorderRadius.circular(18),
@@ -337,7 +370,7 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                               child: const Icon(
                                 Icons.my_location_rounded,
                                 color: Colors.white,
-                                size: 28,
+                                size: 30,
                               ),
                             ),
                             const SizedBox(width: 14),
@@ -350,7 +383,7 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                                     style: TextStyle(
                                       color: Colors.white,
                                       fontSize: 16,
-                                      fontWeight: FontWeight.w700,
+                                      fontWeight: FontWeight.w800,
                                     ),
                                   ),
                                   SizedBox(height: 4),
@@ -369,7 +402,7 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                         const SizedBox(height: 16),
                         SizedBox(
                           width: double.infinity,
-                          height: 52,
+                          height: 54,
                           child: ElevatedButton.icon(
                             style: ElevatedButton.styleFrom(
                               backgroundColor: Colors.white,
@@ -390,14 +423,15 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
                                   ? 'กำลังค้นหาตำแหน่ง...'
                                   : 'ดึง GPS ปัจจุบัน',
                               style: const TextStyle(
-                                fontWeight: FontWeight.w700,
+                                fontWeight: FontWeight.w800,
                                 fontSize: 15,
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 14),
-                        Container(
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 250),
                           width: double.infinity,
                           padding: const EdgeInsets.all(14),
                           decoration: BoxDecoration(
@@ -472,13 +506,13 @@ class _RouletteConditionsScreenState extends State<RouletteConditionsScreen> {
 
                   SizedBox(
                     width: double.infinity,
-                    height: 58,
+                    height: 60,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(22),
                         boxShadow: [
                           BoxShadow(
-                            color: const Color(0xFFFF6B35).withOpacity(0.25),
+                            color: const Color(0xFFFF6B35).withOpacity(0.28),
                             blurRadius: 20,
                             offset: const Offset(0, 10),
                           ),
@@ -536,12 +570,13 @@ class _TopBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 6, 12, 6),
+      padding: const EdgeInsets.fromLTRB(12, 8, 12, 8),
       child: Row(
         children: [
           Material(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
+            elevation: 1,
             child: InkWell(
               borderRadius: BorderRadius.circular(16),
               onTap: () => Navigator.pop(this.context),
@@ -556,7 +591,7 @@ class _TopBar extends StatelessWidget {
               child: Text(
                 'ตั้งเงื่อนไขการสุ่ม',
                 style: TextStyle(
-                  fontSize: 17,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -643,6 +678,46 @@ class _ModernCard extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           child,
+        ],
+      ),
+    );
+  }
+}
+
+class _HeroInfoChip extends StatelessWidget {
+  final IconData icon;
+  final String text;
+
+  const _HeroInfoChip({
+    required this.icon,
+    required this.text,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.18),
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: Colors.white.withOpacity(0.12)),
+      ),
+      child: Row(
+        children: [
+          Icon(icon, color: Colors.white, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: Colors.white,
+                fontSize: 12.5,
+                fontWeight: FontWeight.w700,
+              ),
+            ),
+          ),
         ],
       ),
     );

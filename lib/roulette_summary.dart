@@ -204,6 +204,14 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
     }
   }
 
+  Future<void> _showRandomLoadingDialog() async {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (_) => const _RandomLoadingDialog(),
+    );
+  }
+
   Future<void> randomPick() async {
     if (matched.isEmpty || isRandoming) return;
 
@@ -234,6 +242,13 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
     final distKm = (r['distance_km'] as double);
     final distText = _distanceText(distKm);
 
+    await _showRandomLoadingDialog();
+    await Future.delayed(const Duration(seconds: 2));
+
+    if (mounted) {
+      Navigator.of(context).pop();
+    }
+
     await showDialog(
       context: context,
       barrierDismissible: true,
@@ -241,65 +256,145 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
         return StatefulBuilder(
           builder: (context, setDialogState) {
             return Dialog(
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
+              backgroundColor: Colors.transparent,
+              insetPadding: const EdgeInsets.symmetric(
+                horizontal: 22,
+                vertical: 24,
               ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(16, 16, 16, 18),
+              child: Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(28),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.14),
+                      blurRadius: 24,
+                      offset: const Offset(0, 14),
+                    ),
+                  ],
+                ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.deepOrange.withOpacity(0.12),
-                            borderRadius: BorderRadius.circular(14),
-                          ),
-                          child: const Icon(
-                            Icons.casino,
-                            color: Colors.deepOrange,
-                          ),
+                    Container(
+                      width: 72,
+                      height: 72,
+                      decoration: BoxDecoration(
+                        gradient: const LinearGradient(
+                          colors: [Color(0xFFFF8A3D), Color(0xFFFF5A2A)],
                         ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Text(
-                            'ผลการสุ่ม',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.bold,
+                        borderRadius: BorderRadius.circular(22),
+                      ),
+                      child: const Icon(
+                        Icons.restaurant_menu_rounded,
+                        color: Colors.white,
+                        size: 38,
+                      ),
+                    ),
+                    const SizedBox(height: 14),
+                    const Text(
+                      'เมนูที่ได้กินวันนี้',
+                      style: TextStyle(
+                        fontSize: 20,
+                        fontWeight: FontWeight.w800,
+                        color: Color(0xFF1F2937),
+                      ),
+                    ),
+                    const SizedBox(height: 6),
+                    const Text(
+                      'ขอให้เป็นมื้อที่อร่อยนะ',
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        color: Colors.black54,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.deepOrange.withOpacity(0.10),
+                            Colors.orange.withOpacity(0.07),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(
+                          color: Colors.deepOrange.withOpacity(0.12),
+                        ),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            menuName,
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 22,
+                              fontWeight: FontWeight.w900,
+                              color: Colors.deepOrange,
                             ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 8),
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              '$priceInt บาท',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.green,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 12),
-                    _InfoRow(label: 'ร้าน', value: restaurantName),
-                    _InfoRow(label: 'เมนู', value: menuName),
-                    _InfoRow(label: 'ราคา', value: '$priceInt บาท'),
-                    _InfoRow(label: 'ระยะทาง', value: distText),
-                    const SizedBox(height: 14),
+
+                    const SizedBox(height: 16),
+                    _ResultInfoRow(
+                      icon: Icons.storefront_rounded,
+                      label: 'ร้านอาหาร',
+                      value: restaurantName,
+                    ),
+                    const SizedBox(height: 10),
+                    _ResultInfoRow(
+                      icon: Icons.location_on_rounded,
+                      label: 'ระยะทาง',
+                      value: distText,
+                    ),
+
+                    const SizedBox(height: 20),
 
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
+                      height: 50,
                       child: ElevatedButton(
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.deepOrange,
                           foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
-                          ),
                           elevation: 0,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
                         ),
                         onPressed: () {
                           Navigator.pop(context);
                         },
                         child: const Text(
                           'โอเค',
-                          style: TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
+                          ),
                         ),
                       ),
                     ),
@@ -308,15 +403,14 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
 
                     SizedBox(
                       width: double.infinity,
-                      height: 48,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.orange,
-                          foregroundColor: Colors.white,
+                      height: 50,
+                      child: OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          foregroundColor: Colors.deepOrange,
+                          side: const BorderSide(color: Colors.deepOrange),
                           shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(14),
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          elevation: 0,
                         ),
                         onPressed: isSavingHistory
                             ? null
@@ -332,12 +426,12 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                                   setDialogState(() {});
                                 }
                               },
-                        icon: const Icon(Icons.save),
+                        icon: const Icon(Icons.save_alt_rounded),
                         label: Text(
                           isSavingHistory
                               ? 'กำลังบันทึก...'
                               : 'บันทึกว่ากินเมนูนี้',
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
                     ),
@@ -388,7 +482,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                 children: [
                   Container(
                     width: double.infinity,
-                    padding: const EdgeInsets.all(14),
+                    padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
@@ -396,11 +490,11 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                           Colors.orange.shade400,
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(18),
+                      borderRadius: BorderRadius.circular(22),
                       boxShadow: [
                         BoxShadow(
                           color: Colors.deepOrange.withOpacity(0.18),
-                          blurRadius: 14,
+                          blurRadius: 16,
                           offset: const Offset(0, 10),
                         ),
                       ],
@@ -409,18 +503,22 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'เงื่อนไข',
-                          style: TextStyle(color: Colors.white70),
+                          'เงื่อนไขที่เลือก',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 6),
                         Text(
                           condText,
                           style: const TextStyle(
                             color: Colors.white,
-                            fontWeight: FontWeight.bold,
+                            fontWeight: FontWeight.w800,
+                            fontSize: 15,
                           ),
                         ),
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 12),
                         Row(
                           children: [
                             Container(
@@ -442,11 +540,11 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                             ),
                             const Spacer(),
                             Container(
-                              width: 42,
-                              height: 42,
+                              width: 46,
+                              height: 46,
                               decoration: BoxDecoration(
                                 color: Colors.white.withOpacity(0.18),
-                                borderRadius: BorderRadius.circular(14),
+                                borderRadius: BorderRadius.circular(16),
                               ),
                               child: const Icon(
                                 Icons.restaurant,
@@ -458,46 +556,46 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                       ],
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   SizedBox(
                     width: double.infinity,
-                    height: 52,
+                    height: 54,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.deepOrange,
                         foregroundColor: Colors.white,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
+                          borderRadius: BorderRadius.circular(18),
                         ),
                         elevation: 0,
                       ),
                       onPressed: (matched.isEmpty || isRandoming)
                           ? null
                           : () => randomPick(),
-                      icon: const Icon(Icons.casino),
+                      icon: const Icon(Icons.casino_rounded),
                       label: Text(
                         isRandoming ? 'กำลังสุ่ม...' : 'สุ่มจากรายการนี้',
                         style: const TextStyle(
-                          fontWeight: FontWeight.bold,
+                          fontWeight: FontWeight.w800,
                           fontSize: 16,
                         ),
                       ),
                     ),
                   ),
                   if (message.isNotEmpty) ...[
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 12),
                     Container(
                       width: double.infinity,
-                      padding: const EdgeInsets.all(12),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: Colors.orange.shade50,
                         border: Border.all(color: Colors.orange.shade200),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(14),
                       ),
                       child: Text(message),
                     ),
                   ],
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 12),
                   if (matched.isEmpty)
                     const Padding(
                       padding: EdgeInsets.only(top: 80),
@@ -512,7 +610,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                         margin: const EdgeInsets.only(bottom: 12),
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(18),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.06),
@@ -529,13 +627,13 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                               Row(
                                 children: [
                                   Container(
-                                    width: 44,
-                                    height: 44,
+                                    width: 46,
+                                    height: 46,
                                     decoration: BoxDecoration(
                                       color: Colors.deepOrange.withOpacity(
                                         0.12,
                                       ),
-                                      borderRadius: BorderRadius.circular(14),
+                                      borderRadius: BorderRadius.circular(15),
                                     ),
                                     child: const Icon(
                                       Icons.storefront,
@@ -551,7 +649,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                                         Text(
                                           r['restaurant_name'] ?? '-',
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.bold,
+                                            fontWeight: FontWeight.w800,
                                             fontSize: 15,
                                           ),
                                         ),
@@ -583,7 +681,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                                       _distanceText(dist),
                                       style: const TextStyle(
                                         fontSize: 12,
-                                        fontWeight: FontWeight.w600,
+                                        fontWeight: FontWeight.w700,
                                       ),
                                     ),
                                   ),
@@ -592,7 +690,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                               const SizedBox(height: 12),
                               const Text(
                                 'เมนูที่เข้าเงื่อนไข',
-                                style: TextStyle(fontWeight: FontWeight.bold),
+                                style: TextStyle(fontWeight: FontWeight.w800),
                               ),
                               const SizedBox(height: 8),
                               Wrap(
@@ -662,6 +760,146 @@ class _InfoRow extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _ResultInfoRow extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final String value;
+
+  const _ResultInfoRow({
+    required this.icon,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 18, color: Colors.deepOrange),
+        const SizedBox(width: 8),
+        Text(
+          '$label: ',
+          style: const TextStyle(
+            fontWeight: FontWeight.w700,
+            color: Colors.black54,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _RandomLoadingDialog extends StatefulWidget {
+  const _RandomLoadingDialog();
+
+  @override
+  State<_RandomLoadingDialog> createState() => _RandomLoadingDialogState();
+}
+
+class _RandomLoadingDialogState extends State<_RandomLoadingDialog>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Dialog(
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      child: Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(28),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.14),
+              blurRadius: 24,
+              offset: const Offset(0, 14),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ScaleTransition(
+              scale: Tween<double>(begin: 0.9, end: 1.08).animate(
+                CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+              ),
+              child: Container(
+                width: 84,
+                height: 84,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    colors: [Color(0xFFFF8A3D), Color(0xFFFF5A2A)],
+                  ),
+                  borderRadius: BorderRadius.circular(26),
+                ),
+                child: const Icon(
+                  Icons.ramen_dining_rounded,
+                  color: Colors.white,
+                  size: 44,
+                ),
+              ),
+            ),
+            const SizedBox(height: 18),
+            const Text(
+              'กำลังสุ่มเมนูให้อยู่นะ',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'กำลังเลือกเมนูที่ใช่สำหรับคุณ...',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 13,
+                color: Colors.black54,
+                height: 1.4,
+              ),
+            ),
+            const SizedBox(height: 18),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(99),
+              child: const LinearProgressIndicator(
+                minHeight: 8,
+                backgroundColor: Color(0xFFFFE0D1),
+                valueColor: AlwaysStoppedAnimation<Color>(Colors.deepOrange),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
