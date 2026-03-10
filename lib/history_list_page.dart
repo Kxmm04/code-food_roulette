@@ -134,7 +134,7 @@ class _HistoryListPageState extends State<HistoryListPage> {
           children: [
             Row(
               children: [
-                const Icon(Icons.restaurant, color: Colors.orange),
+                const Icon(Icons.soup_kitchen, color: Colors.orange),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(

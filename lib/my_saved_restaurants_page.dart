@@ -149,7 +149,7 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
                 ),
               ),
               child: const Icon(
-                Icons.restaurant,
+                Icons.dinner_dining,
                 size: 40,
                 color: Colors.orange,
               ),
