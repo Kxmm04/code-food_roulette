@@ -177,14 +177,6 @@ class _HomeScreenState extends State<HomeScreen> {
                                   fontWeight: FontWeight.w800,
                                 ),
                               ),
-                              const SizedBox(height: 4),
-                              Text(
-                                email.isNotEmpty ? email : '-',
-                                style: const TextStyle(
-                                  color: Colors.white70,
-                                  fontSize: 12,
-                                ),
-                              ),
                               const SizedBox(height: 8),
                               const Text(
                                 'เลือกเมนูที่ต้องการใช้งานได้เลย',

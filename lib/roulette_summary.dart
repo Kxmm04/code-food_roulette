@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'home.dart';
+
 class RouletteSummaryScreen extends StatefulWidget {
   final int budgetMin;
   final int budgetMax;
@@ -30,6 +32,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
   bool isLoading = true;
   bool isRandoming = false;
   bool isSavingHistory = false;
+  bool historySaved = false;
   String message = '';
   List<Map<String, dynamic>> matched = [];
 
@@ -164,6 +167,8 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
     required int price,
     required double distanceKm,
   }) async {
+    if (historySaved) return;
+
     final token = await _getToken();
     if (token == null || token.isEmpty) {
       if (!mounted) return;
@@ -193,14 +198,34 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
       final data = jsonDecode(res.body);
 
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(data['message'] ?? 'บันทึกประวัติสำเร็จ')),
-      );
+
+      if (res.statusCode == 200 && data['ok'] == true) {
+        setState(() {
+          historySaved = true;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'บันทึกประวัติสำเร็จ')),
+        );
+
+        await Future.delayed(const Duration(milliseconds: 500));
+
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          (route) => false,
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(data['message'] ?? 'บันทึกประวัติไม่สำเร็จ')),
+        );
+      }
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text('บันทึกประวัติไม่สำเร็จ: $e')));
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('บันทึกประวัติไม่สำเร็จ: $e')),
+      );
     } finally {
       if (mounted) {
         setState(() => isSavingHistory = false);
@@ -255,6 +280,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
 
     setState(() {
       randomCount++;
+      historySaved = false;
     });
 
     await _showRandomLoadingDialog();
@@ -415,13 +441,19 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                       height: 50,
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.deepOrange,
-                          side: const BorderSide(color: Colors.deepOrange),
+                          foregroundColor: historySaved
+                              ? Colors.green
+                              : Colors.deepOrange,
+                          side: BorderSide(
+                            color: historySaved
+                                ? Colors.green
+                                : Colors.deepOrange,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
                           ),
                         ),
-                        onPressed: isSavingHistory
+                        onPressed: (isSavingHistory || historySaved)
                             ? null
                             : () async {
                                 setDialogState(() {});
@@ -435,10 +467,16 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                                   setDialogState(() {});
                                 }
                               },
-                        icon: const Icon(Icons.save_alt_rounded),
+                        icon: Icon(
+                          historySaved
+                              ? Icons.check_circle
+                              : Icons.save_alt_rounded,
+                        ),
                         label: Text(
                           isSavingHistory
                               ? 'กำลังบันทึก...'
+                              : historySaved
+                              ? 'บันทึกแล้ว'
                               : 'บันทึกว่ากินเมนูนี้',
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
@@ -758,35 +796,6 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                     }),
                 ],
               ),
-      ),
-    );
-  }
-}
-
-class _InfoRow extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _InfoRow({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 70,
-            child: Text(label, style: const TextStyle(color: Colors.black54)),
-          ),
-          Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
       ),
     );
   }

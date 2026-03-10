@@ -96,14 +96,14 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
 
       await fetchSavedRestaurants();
 
-      var url = Uri.parse(
+      final url = Uri.parse(
         "https://overpass-api.de/api/interpreter?data=[out:json];node(around:2000,$userLat,$userLng)[amenity=restaurant];out;",
       );
 
-      var response = await http.get(url);
+      final response = await http.get(url);
 
-      var body = utf8.decode(response.bodyBytes);
-      var data = json.decode(body);
+      final body = utf8.decode(response.bodyBytes);
+      final data = json.decode(body);
 
       if (!mounted) return;
       setState(() {
@@ -120,13 +120,18 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
     }
   }
 
-  Future<void> saveRestaurant(String name, String address) async {
-    var url = Uri.parse(
+  Future<void> saveRestaurant(
+    String name,
+    String address,
+    double lat,
+    double lng,
+  ) async {
+    final url = Uri.parse(
       "http://172.24.150.118/food_roulette_api/save_restaurant.php",
     );
 
     try {
-      var response = await http.post(
+      final response = await http.post(
         url,
         headers: {
           "Authorization": "Bearer ${widget.token}",
@@ -136,10 +141,12 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
           "restaurant_name": name,
           "address": address,
           "avg_price": 50,
+          "lat": lat,
+          "lng": lng,
         }),
       );
 
-      var result = json.decode(utf8.decode(response.bodyBytes));
+      final result = json.decode(utf8.decode(response.bodyBytes));
 
       if (!mounted) return;
 
@@ -162,14 +169,20 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
   }
 
   Widget restaurantCard(dynamic item) {
-    var tags = item["tags"] ?? {};
+    final tags = item["tags"] ?? {};
 
-    String name = tags["name"] ?? "ไม่ทราบชื่อร้าน";
-    String address = tags["addr:street"] ?? "ไม่พบที่อยู่";
+    final String name = tags["name"] ?? "ไม่ทราบชื่อร้าน";
+    final String address =
+        tags["addr:full"] ??
+        tags["addr:street"] ??
+        tags["addr:subdistrict"] ??
+        tags["addr:district"] ??
+        tags["addr:province"] ??
+        "ไม่พบที่อยู่";
 
-    double lat = (item["lat"] as num).toDouble();
-    double lon = (item["lon"] as num).toDouble();
-    double distance = calculateDistance(lat, lon);
+    final double lat = (item["lat"] as num).toDouble();
+    final double lon = (item["lon"] as num).toDouble();
+    final double distance = calculateDistance(lat, lon);
 
     final alreadySaved = isAlreadySaved(name, address);
 
@@ -235,7 +248,7 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
                 icon: const Icon(Icons.favorite),
                 label: const Text("บันทึกร้าน"),
                 onPressed: () async {
-                  await saveRestaurant(name, address);
+                  await saveRestaurant(name, address, lat, lon);
                 },
               ),
           ],
@@ -282,7 +295,9 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
               child: ElevatedButton.icon(
                 onPressed: isLoading ? null : fetchRestaurantsFromMap,
                 icon: Icon(
-                  isLoading ? Icons.sync_rounded : Icons.location_searching_rounded,
+                  isLoading
+                      ? Icons.sync_rounded
+                      : Icons.location_searching_rounded,
                   color: Colors.white,
                 ),
                 label: Text(
@@ -310,13 +325,13 @@ class _SaveRestaurantPageState extends State<SaveRestaurantPage> {
             child: isLoading
                 ? const Center(child: CircularProgressIndicator())
                 : restaurants.isEmpty
-                    ? const Center(child: Text("กดปุ่มเพื่อค้นหาร้าน"))
-                    : ListView.builder(
-                        itemCount: restaurants.length,
-                        itemBuilder: (context, index) {
-                          return restaurantCard(restaurants[index]);
-                        },
-                      ),
+                ? const Center(child: Text("กดปุ่มเพื่อค้นหาร้าน"))
+                : ListView.builder(
+                    itemCount: restaurants.length,
+                    itemBuilder: (context, index) {
+                      return restaurantCard(restaurants[index]);
+                    },
+                  ),
           ),
         ],
       ),
