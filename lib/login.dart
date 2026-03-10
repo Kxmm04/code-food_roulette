@@ -171,6 +171,12 @@ class _LoginPageState extends State<LoginPage> {
                             );
                           },
                           child: const Text("ลืมรหัสผ่าน?"),
+                          style: TextButton.styleFrom(
+                            foregroundColor: const Color.fromARGB(255, 196, 46, 0),
+                            textStyle: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
                       const SizedBox(height: 10),

@@ -192,7 +192,7 @@ class _HistoryListPageState extends State<HistoryListPage> {
                       style: const TextStyle(color: Colors.black),
                     ),
                   ],
-                ),
+                ),   
               ],
             ),
           ],

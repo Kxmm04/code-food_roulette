@@ -36,8 +36,8 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
         url,
         headers: {"Content-Type": "application/json"},
         body: jsonEncode({
-          "email": widget.email,
-          "otp_code": widget.otp,
+          "email": widget.email.trim(),
+          "otp_code": widget.otp.trim(),
           "new_password": password.text.trim(),
         }),
       );
