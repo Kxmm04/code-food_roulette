@@ -28,6 +28,8 @@ class _HistoryListPageState extends State<HistoryListPage> {
 
       var jsonData = json.decode(response.body);
 
+      if (!mounted) return;
+
       if (jsonData["ok"] == true) {
         setState(() {
           history = jsonData["history"] ?? [];
@@ -39,10 +41,69 @@ class _HistoryListPageState extends State<HistoryListPage> {
         });
       }
     } catch (e) {
-      print(e);
+      debugPrint(e.toString());
+      if (!mounted) return;
       setState(() {
         isLoading = false;
       });
+    }
+  }
+
+  Future<void> deleteHistory(int historyId) async {
+    var url = Uri.parse(
+      "http://172.24.150.118/food_roulette_api/history_delete.php",
+    );
+
+    try {
+      var response = await http.post(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"history_id": historyId}),
+      );
+
+      var result = json.decode(response.body);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result["message"] ?? "ลบประวัติสำเร็จ")),
+      );
+
+      fetchHistory();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("ลบประวัติไม่สำเร็จ: $e")),
+      );
+    }
+  }
+
+  Future<void> confirmDeleteHistory(int historyId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("ยืนยันการลบ"),
+          content: const Text("ต้องการลบประวัติการกินนี้ใช่หรือไม่"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("ยกเลิก"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("ลบ"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (ok == true) {
+      await deleteHistory(historyId);
     }
   }
 
@@ -71,7 +132,6 @@ class _HistoryListPageState extends State<HistoryListPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            /// ชื่อร้าน
             Row(
               children: [
                 const Icon(Icons.restaurant, color: Colors.orange),
@@ -85,19 +145,20 @@ class _HistoryListPageState extends State<HistoryListPage> {
                     ),
                   ),
                 ),
+                IconButton(
+                  icon: const Icon(Icons.delete, color: Colors.red),
+                  onPressed: () {
+                    confirmDeleteHistory(item["history_id"]);
+                  },
+                ),
               ],
             ),
-
             const SizedBox(height: 8),
-
-            /// เมนู
             Text(
               "เมนู: ${item["menu_name"]}",
               style: const TextStyle(fontSize: 15),
             ),
-
             const SizedBox(height: 12),
-
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -107,14 +168,12 @@ class _HistoryListPageState extends State<HistoryListPage> {
                     Text("${item["price"]} บาท"),
                   ],
                 ),
-
                 Row(
                   children: [
                     const Icon(Icons.location_on, color: Colors.red),
                     Text("${item["distance_km"]} km"),
                   ],
                 ),
-
                 Row(
                   children: [
                     const Icon(Icons.access_time, color: Colors.blue),
@@ -133,19 +192,20 @@ class _HistoryListPageState extends State<HistoryListPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xfff5f5f5),
-
-      appBar: AppBar(title: const Text("ประวัติการกิน"), centerTitle: true),
-
+      appBar: AppBar(
+        title: const Text("ประวัติการกิน"),
+        centerTitle: true,
+      ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : history.isEmpty
-          ? const Center(child: Text("ยังไม่มีประวัติการกิน"))
-          : ListView.builder(
-              itemCount: history.length,
-              itemBuilder: (context, index) {
-                return historyCard(history[index]);
-              },
-            ),
+              ? const Center(child: Text("ยังไม่มีประวัติการกิน"))
+              : ListView.builder(
+                  itemCount: history.length,
+                  itemBuilder: (context, index) {
+                    return historyCard(history[index]);
+                  },
+                ),
     );
   }
 }

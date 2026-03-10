@@ -22,17 +22,84 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
       "http://172.24.150.118/food_roulette_api/my_saved_restaurants.php",
     );
 
-    var response = await http.get(
-      url,
-      headers: {"Authorization": "Bearer ${widget.token}"},
+    try {
+      var response = await http.get(
+        url,
+        headers: {"Authorization": "Bearer ${widget.token}"},
+      );
+
+      var result = json.decode(response.body);
+
+      if (!mounted) return;
+      setState(() {
+        restaurants = result["saved_restaurants"] ?? [];
+        isLoading = false;
+      });
+    } catch (e) {
+      debugPrint(e.toString());
+      if (!mounted) return;
+      setState(() {
+        isLoading = false;
+      });
+    }
+  }
+
+  Future<void> deleteSaved(int savedId) async {
+    var url = Uri.parse(
+      "http://172.24.150.118/food_roulette_api/saved_delete.php",
     );
 
-    var result = json.decode(response.body);
+    try {
+      var response = await http.post(
+        url,
+        headers: {
+          "Authorization": "Bearer ${widget.token}",
+          "Content-Type": "application/json",
+        },
+        body: jsonEncode({"saved_id": savedId}),
+      );
 
-    setState(() {
-      restaurants = result["saved_restaurants"] ?? [];
-      isLoading = false;
-    });
+      var result = json.decode(response.body);
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(result["message"] ?? "ลบร้านสำเร็จ")),
+      );
+
+      fetchRestaurants();
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text("ลบร้านไม่สำเร็จ: $e")),
+      );
+    }
+  }
+
+  Future<void> confirmDeleteSaved(int savedId) async {
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (_) {
+        return AlertDialog(
+          title: const Text("ยืนยันการลบ"),
+          content: const Text("ต้องการลบร้านนี้ออกจากรายการที่บันทึกไว้ใช่หรือไม่"),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text("ยกเลิก"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text("ลบ"),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (ok == true) {
+      await deleteSaved(savedId);
+    }
   }
 
   @override
@@ -71,7 +138,6 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
         ),
         child: Row(
           children: [
-            /// รูปร้าน
             Container(
               width: 90,
               height: 90,
@@ -88,8 +154,6 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
                 color: Colors.orange,
               ),
             ),
-
-            /// รายละเอียดร้าน
             Expanded(
               child: Padding(
                 padding: const EdgeInsets.all(12),
@@ -103,9 +167,7 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
                         fontWeight: FontWeight.bold,
                       ),
                     ),
-
                     const SizedBox(height: 4),
-
                     Row(
                       children: [
                         const Icon(
@@ -123,9 +185,7 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
                         ),
                       ],
                     ),
-
                     const SizedBox(height: 6),
-
                     Row(
                       children: [
                         const Icon(
@@ -146,10 +206,19 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
                 ),
               ),
             ),
-
-            const Padding(
-              padding: EdgeInsets.only(right: 12),
-              child: Icon(Icons.arrow_forward_ios, size: 16),
+            Column(
+              children: [
+                IconButton(
+                  icon: const Icon(Icons.delete_outline, color: Colors.red),
+                  onPressed: () {
+                    confirmDeleteSaved(item["saved_id"]);
+                  },
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(right: 12),
+                  child: Icon(Icons.arrow_forward_ios, size: 16),
+                ),
+              ],
             ),
           ],
         ),
@@ -161,35 +230,33 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xfff6f7fb),
-
       appBar: AppBar(
         title: const Text("ร้านที่บันทึกไว้"),
         centerTitle: true,
         backgroundColor: Colors.orange,
       ),
-
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : restaurants.isEmpty
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.restaurant_menu, size: 80, color: Colors.grey),
-                  SizedBox(height: 10),
-                  Text(
-                    "ยังไม่มีร้านที่บันทึกไว้",
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
+              ? const Center(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.restaurant_menu, size: 80, color: Colors.grey),
+                      SizedBox(height: 10),
+                      Text(
+                        "ยังไม่มีร้านที่บันทึกไว้",
+                        style: TextStyle(fontSize: 18, color: Colors.grey),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            )
-          : ListView.builder(
-              itemCount: restaurants.length,
-              itemBuilder: (context, index) {
-                return restaurantCard(restaurants[index]);
-              },
-            ),
+                )
+              : ListView.builder(
+                  itemCount: restaurants.length,
+                  itemBuilder: (context, index) {
+                    return restaurantCard(restaurants[index]);
+                  },
+                ),
     );
   }
 }
