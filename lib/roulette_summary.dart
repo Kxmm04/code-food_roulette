@@ -39,6 +39,8 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
   int randomCount = 0;
   final int maxRandomCount = 3;
 
+  final List<int> usedMenuIds = [];
+
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
@@ -86,6 +88,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
       message = '';
       matched = [];
       randomCount = 0;
+      usedMenuIds.clear();
     });
 
     try {
@@ -97,9 +100,9 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
       final data = jsonDecode(res.body);
 
       if (res.statusCode != 200 || data['ok'] != true) {
-        setState(
-          () => message = data['message'] ?? 'ดึงข้อมูลร้าน+เมนูไม่สำเร็จ',
-        );
+        setState(() {
+          message = data['message'] ?? 'ดึงข้อมูลร้าน+เมนูไม่สำเร็จ';
+        });
         return;
       }
 
@@ -153,7 +156,9 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
             : '';
       });
     } catch (e) {
-      setState(() => message = 'เชื่อมต่อ API ไม่สำเร็จ: $e');
+      setState(() {
+        message = 'เชื่อมต่อ API ไม่สำเร็จ: $e';
+      });
     } finally {
       if (mounted) {
         setState(() => isLoading = false);
@@ -266,7 +271,23 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
       return;
     }
 
-    final pick = all[Random().nextInt(all.length)];
+    final available = all.where((item) {
+      final m = item['m'] as Map<String, dynamic>;
+      final menuId = ((m['menu_id'] ?? 0) as num).toInt();
+      return !usedMenuIds.contains(menuId);
+    }).toList();
+
+    if (available.isEmpty) {
+      if (mounted) {
+        setState(() => isRandoming = false);
+      }
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('เมนูที่เข้าเงื่อนไขถูกสุ่มครบแล้ว')),
+      );
+      return;
+    }
+
+    final pick = available[Random().nextInt(available.length)];
     final r = pick['r'] as Map<String, dynamic>;
     final m = pick['m'] as Map<String, dynamic>;
 
@@ -281,6 +302,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
     setState(() {
       randomCount++;
       historySaved = false;
+      usedMenuIds.add(menuId);
     });
 
     await _showRandomLoadingDialog();
@@ -441,13 +463,11 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                       height: 50,
                       child: OutlinedButton.icon(
                         style: OutlinedButton.styleFrom(
-                          foregroundColor: historySaved
-                              ? Colors.green
-                              : Colors.deepOrange,
+                          foregroundColor:
+                              historySaved ? Colors.green : Colors.deepOrange,
                           side: BorderSide(
-                            color: historySaved
-                                ? Colors.green
-                                : Colors.deepOrange,
+                            color:
+                                historySaved ? Colors.green : Colors.deepOrange,
                           ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(16),
@@ -476,8 +496,8 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                           isSavingHistory
                               ? 'กำลังบันทึก...'
                               : historySaved
-                              ? 'บันทึกแล้ว'
-                              : 'บันทึกว่ากินเมนูนี้',
+                                  ? 'บันทึกแล้ว'
+                                  : 'บันทึกว่ากินเมนูนี้',
                           style: const TextStyle(fontWeight: FontWeight.w800),
                         ),
                       ),
@@ -513,290 +533,370 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 22),
         ),
       ),
-      body: RefreshIndicator(
-        onRefresh: fetchAndFilter,
-        child: isLoading
-            ? ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                children: const [
-                  SizedBox(height: 250),
-                  Center(child: CircularProgressIndicator()),
-                ],
-              )
-            : ListView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.deepOrange.shade400,
-                          Colors.orange.shade400,
+      body: isLoading
+          ? ListView(
+              physics: const ClampingScrollPhysics(),
+              children: const [
+                SizedBox(height: 250),
+                Center(child: CircularProgressIndicator()),
+              ],
+            )
+          : ListView(
+              physics: const ClampingScrollPhysics(),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        Colors.deepOrange.shade400,
+                        Colors.orange.shade400,
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(22),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.deepOrange.withOpacity(0.18),
+                        blurRadius: 16,
+                        offset: const Offset(0, 10),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'เงื่อนไขที่เลือก',
+                        style: TextStyle(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        condText,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 12,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(99),
+                            ),
+                            child: Text(
+                              'พบ ${matched.length} ร้าน',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Container(
+                            width: 46,
+                            height: 46,
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            child: const Icon(
+                              Icons.restaurant,
+                              color: Colors.white,
+                            ),
+                          ),
                         ],
                       ),
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.deepOrange.withOpacity(0.18),
-                          blurRadius: 16,
-                          offset: const Offset(0, 10),
-                        ),
-                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 12),
+                SizedBox(
+                  width: double.infinity,
+                  height: 54,
+                  child: ElevatedButton.icon(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.deepOrange,
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(18),
+                      ),
+                      elevation: 0,
                     ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'เงื่อนไขที่เลือก',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontWeight: FontWeight.w600,
-                          ),
-                        ),
-                        const SizedBox(height: 6),
-                        Text(
-                          condText,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                            fontSize: 15,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 12,
-                                vertical: 8,
-                              ),
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.18),
-                                borderRadius: BorderRadius.circular(99),
-                              ),
-                              child: Text(
-                                'พบ ${matched.length} ร้าน',
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                            const Spacer(),
-                            Container(
-                              width: 46,
-                              height: 46,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.18),
-                                borderRadius: BorderRadius.circular(16),
-                              ),
-                              child: const Icon(
-                                Icons.restaurant,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
+                    onPressed:
+                        (matched.isEmpty ||
+                                isRandoming ||
+                                randomCount >= maxRandomCount)
+                            ? null
+                            : () => randomPick(),
+                    icon: const Icon(Icons.casino_rounded),
+                    label: Text(
+                      isRandoming
+                          ? 'กำลังสุ่ม...'
+                          : randomCount >= maxRandomCount
+                              ? 'สุ่มครบ 3 ครั้งแล้ว'
+                              : 'สุ่มจากรายการนี้',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w800,
+                        fontSize: 16,
+                      ),
                     ),
                   ),
+                ),
+                const SizedBox(height: 8),
+                Center(
+                  child: Text(
+                    'สุ่มไปแล้ว $randomCount / $maxRandomCount ครั้ง',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Colors.grey.shade600,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Center(
+                  child: Text(
+                    'ระบบจะไม่สุ่มเมนูซ้ำในรอบนี้',
+                    style: TextStyle(
+                      fontSize: 11.5,
+                      color: Colors.grey.shade500,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ),
+                if (message.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  SizedBox(
+                  Container(
                     width: double.infinity,
-                    height: 54,
-                    child: ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.deepOrange,
-                        foregroundColor: Colors.white,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(18),
-                        ),
-                        elevation: 0,
-                      ),
-                      onPressed:
-                          (matched.isEmpty ||
-                              isRandoming ||
-                              randomCount >= maxRandomCount)
-                          ? null
-                          : () => randomPick(),
-                      icon: const Icon(Icons.casino_rounded),
-                      label: Text(
-                        isRandoming
-                            ? 'กำลังสุ่ม...'
-                            : randomCount >= maxRandomCount
-                            ? 'สุ่มครบ 3 ครั้งแล้ว'
-                            : 'สุ่มจากรายการนี้',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w800,
-                          fontSize: 16,
-                        ),
-                      ),
+                    padding: const EdgeInsets.all(14),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.shade50,
+                      border: Border.all(color: Colors.orange.shade200),
+                      borderRadius: BorderRadius.circular(14),
                     ),
+                    child: Text(message),
                   ),
-                  const SizedBox(height: 8),
-                  Center(
-                    child: Text(
-                      'สุ่มไปแล้ว $randomCount / $maxRandomCount ครั้ง',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey.shade600,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
-                  ),
-                  if (message.isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.all(14),
-                      decoration: BoxDecoration(
-                        color: Colors.orange.shade50,
-                        border: Border.all(color: Colors.orange.shade200),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Text(message),
-                    ),
-                  ],
-                  const SizedBox(height: 12),
-                  if (matched.isEmpty)
-                    const Padding(
-                      padding: EdgeInsets.only(top: 80),
-                      child: Center(child: Text('ไม่มีรายการที่เข้าเงื่อนไข')),
-                    )
-                  else
-                    ...matched.map((r) {
-                      final menus = (r['menus'] as List).cast<dynamic>();
-                      final dist = (r['distance_km'] as double);
+                ],
+                const SizedBox(height: 12),
+                if (matched.isEmpty)
+                  const Padding(
+                    padding: EdgeInsets.only(top: 80),
+                    child: Center(child: Text('ไม่มีรายการที่เข้าเงื่อนไข')),
+                  )
+                else
+                  ...matched.map((r) {
+                    final menus = (r['menus'] as List).cast<dynamic>();
+                    final dist = (r['distance_km'] as double);
 
-                      return Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(20),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.06),
-                              blurRadius: 12,
-                              offset: const Offset(0, 8),
-                            ),
-                          ],
-                        ),
-                        child: Padding(
-                          padding: const EdgeInsets.all(14),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 46,
-                                    height: 46,
-                                    decoration: BoxDecoration(
-                                      color: Colors.deepOrange.withOpacity(
-                                        0.12,
-                                      ),
-                                      borderRadius: BorderRadius.circular(15),
-                                    ),
-                                    child: const Icon(
-                                      Icons.storefront,
-                                      color: Colors.deepOrange,
-                                    ),
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(20),
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.06),
+                            blurRadius: 12,
+                            offset: const Offset(0, 8),
+                          ),
+                        ],
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.all(14),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                Container(
+                                  width: 46,
+                                  height: 46,
+                                  decoration: BoxDecoration(
+                                    color: Colors.deepOrange.withOpacity(0.12),
+                                    borderRadius: BorderRadius.circular(15),
                                   ),
-                                  const SizedBox(width: 12),
-                                  Expanded(
-                                    child: Column(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      children: [
+                                  child: const Icon(
+                                    Icons.storefront,
+                                    color: Colors.deepOrange,
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        r['restaurant_name'] ?? '-',
+                                        style: const TextStyle(
+                                          fontWeight: FontWeight.w800,
+                                          fontSize: 15,
+                                        ),
+                                      ),
+                                      if ((r['address'] ?? '')
+                                          .toString()
+                                          .isNotEmpty)
                                         Text(
-                                          r['restaurant_name'] ?? '-',
+                                          r['address'],
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
                                           style: const TextStyle(
-                                            fontWeight: FontWeight.w800,
-                                            fontSize: 15,
+                                            fontSize: 12,
+                                            color: Colors.black54,
                                           ),
                                         ),
-                                        if ((r['address'] ?? '')
-                                            .toString()
-                                            .isNotEmpty)
-                                          Text(
-                                            r['address'],
-                                            maxLines: 1,
-                                            overflow: TextOverflow.ellipsis,
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              color: Colors.black54,
-                                            ),
-                                          ),
+                                    ],
+                                  ),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: Colors.blueGrey.withOpacity(0.10),
+                                    borderRadius: BorderRadius.circular(99),
+                                  ),
+                                  child: Text(
+                                    _distanceText(dist),
+                                    style: const TextStyle(
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w700,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            Row(
+                              children: [
+                                const Icon(
+                                  Icons.fastfood_rounded,
+                                  size: 18,
+                                  color: Colors.deepOrange,
+                                ),
+                                const SizedBox(width: 6),
+                                const Text(
+                                  'เมนูที่เข้าเงื่อนไข',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    fontSize: 14.5,
+                                    color: Color(0xFF2D2D2D),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 8),
+                            Wrap(
+                              spacing: 10,
+                              runSpacing: 10,
+                              children: menus.map((m) {
+                                final menuName =
+                                    (m['menu_name'] ?? '-').toString();
+                                final price = (m['price'] ?? '-').toString();
+
+                                return Container(
+                                  constraints: const BoxConstraints(
+                                    minWidth: 120,
+                                  ),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 12,
+                                    vertical: 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        Colors.deepOrange.withOpacity(0.12),
+                                        Colors.orange.withOpacity(0.08),
                                       ],
                                     ),
-                                  ),
-                                  Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 6,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      color: Colors.blueGrey.withOpacity(0.10),
-                                      borderRadius: BorderRadius.circular(99),
-                                    ),
-                                    child: Text(
-                                      _distanceText(dist),
-                                      style: const TextStyle(
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              const SizedBox(height: 12),
-                              const Text(
-                                'เมนูที่เข้าเงื่อนไข',
-                                style: TextStyle(fontWeight: FontWeight.w800),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: menus.map((m) {
-                                  final menuName = (m['menu_name'] ?? '-')
-                                      .toString();
-                                  final price = (m['price'] ?? '-').toString();
-
-                                  return Container(
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 10,
-                                      vertical: 8,
-                                    ),
-                                    decoration: BoxDecoration(
+                                    borderRadius: BorderRadius.circular(16),
+                                    border: Border.all(
                                       color: Colors.deepOrange.withOpacity(
-                                        0.08,
+                                        0.18,
                                       ),
-                                      borderRadius: BorderRadius.circular(14),
-                                      border: Border.all(
+                                    ),
+                                    boxShadow: [
+                                      BoxShadow(
                                         color: Colors.deepOrange.withOpacity(
-                                          0.12,
+                                          0.06,
+                                        ),
+                                        blurRadius: 8,
+                                        offset: const Offset(0, 3),
+                                      ),
+                                    ],
+                                  ),
+                                  child: Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Container(
+                                        width: 28,
+                                        height: 28,
+                                        decoration: BoxDecoration(
+                                          color: Colors.white.withOpacity(0.9),
+                                          borderRadius:
+                                              BorderRadius.circular(10),
+                                        ),
+                                        child: const Icon(
+                                          Icons.restaurant_menu_rounded,
+                                          size: 16,
+                                          color: Colors.deepOrange,
                                         ),
                                       ),
-                                    ),
-                                    child: Text(
-                                      '$menuName • $price บาท',
-                                      style: const TextStyle(fontSize: 12),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ),
+                                      const SizedBox(width: 8),
+                                      Flexible(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            Text(
+                                              menuName,
+                                              maxLines: 2,
+                                              overflow: TextOverflow.ellipsis,
+                                              style: const TextStyle(
+                                                fontSize: 13.5,
+                                                fontWeight: FontWeight.w700,
+                                                color: Color(0xFF2D2D2D),
+                                                height: 1.25,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            Text(
+                                              '$price บาท',
+                                              style: const TextStyle(
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w800,
+                                                color: Colors.deepOrange,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
                         ),
-                      );
-                    }),
-                ],
-              ),
-      ),
+                      ),
+                    );
+                  }),
+              ],
+            ),
     );
   }
 }

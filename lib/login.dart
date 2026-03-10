@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:http/http.dart' as http;
 
+import 'forgot_password_page.dart';
 import 'register.dart';
 import 'home.dart';
 
@@ -46,12 +47,16 @@ class _LoginPageState extends State<LoginPage> {
 
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const HomeScreen()),
+          MaterialPageRoute(
+            builder: (_) => const HomeScreen(),
+          ),
         );
       } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(data["message"] ?? "Email หรือ Password ไม่ถูกต้อง"),
+            content: Text(
+              data["message"] ?? "Email หรือ Password ไม่ถูกต้อง",
+            ),
           ),
         );
       }
@@ -72,41 +77,57 @@ class _LoginPageState extends State<LoginPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.orange.shade50,
-      body: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(25),
-          child: Column(
-            children: [
-              const Icon(
-                Icons.restaurant_menu,
-                size: 90,
-                color: Colors.deepOrange,
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                "Food Roulette",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.deepOrange,
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFFF7043),
+              Color(0xFFFFA726),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(25),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.restaurant_menu,
+                  size: 90,
+                  color: Colors.white,
                 ),
-              ),
-              Text(
-                "สุ่มเมนูอาหารกันเถอะ!",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.grey[700],
+                const SizedBox(height: 10),
+                const Text(
+                  "Food Roulette",
+                  style: TextStyle(
+                    fontSize: 32,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 30),
-              Card(
-                elevation: 8,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
+                const Text(
+                  "สุ่มเมนูอาหารกันเถอะ!",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
                 ),
-                child: Padding(
-                  padding: const EdgeInsets.all(20),
+                const SizedBox(height: 30),
+                Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      ),
+                    ],
+                  ),
                   child: Column(
                     children: [
                       TextField(
@@ -114,8 +135,11 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.email),
                           labelText: "Email",
+                          filled: true,
+                          fillColor: Colors.grey.shade100,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
@@ -126,46 +150,81 @@ class _LoginPageState extends State<LoginPage> {
                         decoration: InputDecoration(
                           prefixIcon: const Icon(Icons.lock),
                           labelText: "Password",
+                          filled: true,
+                          fillColor: Colors.grey.shade100,
                           border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(15),
+                            borderSide: BorderSide.none,
                           ),
                         ),
                       ),
-                      const SizedBox(height: 20),
+                      const SizedBox(height: 5),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const ForgotPasswordPage(),
+                              ),
+                            );
+                          },
+                          child: const Text("ลืมรหัสผ่าน?"),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
+                            elevation: 5,
                             backgroundColor: Colors.deepOrange,
                             shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(15),
                             ),
                           ),
                           onPressed: login,
                           child: const Text(
                             "เข้าสู่ระบบ",
-                            style: TextStyle(fontSize: 18, color: Colors.white),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(height: 10),
-                      TextButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterPage(),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          const Text("ยังไม่มีบัญชี? "),
+                          GestureDetector(
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const RegisterPage(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "สมัครสมาชิก",
+                              style: TextStyle(
+                                color: Colors.deepOrange,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                          );
-                        },
-                        child: const Text("สมัครสมาชิก"),
-                      ),
+                          ),
+                        ],
+                      )
                     ],
                   ),
-                ),
-              )
-            ],
+                )
+              ],
+            ),
           ),
         ),
       ),
