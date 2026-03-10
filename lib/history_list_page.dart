@@ -75,9 +75,9 @@ class _HistoryListPageState extends State<HistoryListPage> {
       fetchHistory();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("ลบประวัติไม่สำเร็จ: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("ลบประวัติไม่สำเร็จ: $e")));
     }
   }
 
@@ -117,11 +117,11 @@ class _HistoryListPageState extends State<HistoryListPage> {
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Colors.orange.shade50, // พื้นหลังกล่องสีส้มอ่อน
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.grey.withOpacity(0.2),
+            color: Colors.orange.withOpacity(0.2),
             blurRadius: 6,
             offset: const Offset(0, 3),
           ),
@@ -135,13 +135,14 @@ class _HistoryListPageState extends State<HistoryListPage> {
             Row(
               children: [
                 const Icon(Icons.soup_kitchen, color: Colors.orange),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Text(
                     item["restaurant_name"] ?? "",
                     style: const TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.bold,
+                      color: Colors.black,
                     ),
                   ),
                 ),
@@ -153,31 +154,43 @@ class _HistoryListPageState extends State<HistoryListPage> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
+
             Text(
               "เมนู: ${item["menu_name"]}",
-              style: const TextStyle(fontSize: 15),
+              style: const TextStyle(fontSize: 15, color: Colors.black),
             ),
+
             const SizedBox(height: 12),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Row(
                   children: [
                     const Icon(Icons.attach_money, color: Colors.green),
-                    Text("${item["price"]} บาท"),
+                    Text(
+                      "${item["price"]} บาท",
+                      style: const TextStyle(color: Colors.black),
+                    ),
                   ],
                 ),
                 Row(
                   children: [
                     const Icon(Icons.location_on, color: Colors.red),
-                    Text("${item["distance_km"]} km"),
+                    Text(
+                      "${item["distance_km"]} km",
+                      style: const TextStyle(color: Colors.black),
+                    ),
                   ],
                 ),
                 Row(
                   children: [
                     const Icon(Icons.access_time, color: Colors.blue),
-                    Text(item["eaten_at"].toString().substring(0, 10)),
+                    Text(
+                      item["eaten_at"].toString().substring(0, 10),
+                      style: const TextStyle(color: Colors.black),
+                    ),
                   ],
                 ),
               ],
@@ -195,17 +208,23 @@ class _HistoryListPageState extends State<HistoryListPage> {
       appBar: AppBar(
         title: const Text("ประวัติการกิน"),
         centerTitle: true,
+        backgroundColor: Colors.orange,
       ),
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : history.isEmpty
-              ? const Center(child: Text("ยังไม่มีประวัติการกิน"))
-              : ListView.builder(
-                  itemCount: history.length,
-                  itemBuilder: (context, index) {
-                    return historyCard(history[index]);
-                  },
-                ),
+          ? const Center(
+              child: Text(
+                "ยังไม่มีประวัติการกิน",
+                style: TextStyle(color: Colors.black),
+              ),
+            )
+          : ListView.builder(
+              itemCount: history.length,
+              itemBuilder: (context, index) {
+                return historyCard(history[index]);
+              },
+            ),
     );
   }
 }

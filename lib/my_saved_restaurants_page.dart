@@ -70,9 +70,9 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
       fetchRestaurants();
     } catch (e) {
       if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("ลบร้านไม่สำเร็จ: $e")),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text("ลบร้านไม่สำเร็จ: $e")));
     }
   }
 
@@ -82,7 +82,9 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
       builder: (_) {
         return AlertDialog(
           title: const Text("ยืนยันการลบ"),
-          content: const Text("ต้องการลบร้านนี้ออกจากรายการที่บันทึกไว้ใช่หรือไม่"),
+          content: const Text(
+            "ต้องการลบร้านนี้ออกจากรายการที่บันทึกไว้ใช่หรือไม่",
+          ),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context, false),
@@ -126,12 +128,12 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
       child: Container(
         margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Colors.orange.shade50, // พื้นหลังส้มอ่อน
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
               blurRadius: 12,
-              color: Colors.black.withOpacity(0.08),
+              color: Colors.orange.withOpacity(0.2),
               offset: const Offset(0, 4),
             ),
           ],
@@ -142,7 +144,7 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
               width: 90,
               height: 90,
               decoration: const BoxDecoration(
-                color: Color(0xffFFF3E0),
+                color: Color(0xffFFE0B2),
                 borderRadius: BorderRadius.only(
                   topLeft: Radius.circular(20),
                   bottomLeft: Radius.circular(20),
@@ -165,6 +167,7 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
+                        color: Colors.black,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -173,35 +176,19 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
                         const Icon(
                           Icons.location_on,
                           size: 16,
-                          color: Colors.grey,
+                          color: Colors.orange,
                         ),
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
                             item["address"] ?? "ไม่พบที่อยู่",
-                            style: const TextStyle(color: Colors.grey),
+                            style: const TextStyle(color: Colors.black),
                             overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                     const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        const Icon(
-                          Icons.attach_money,
-                          size: 16,
-                          color: Colors.green,
-                        ),
-                        Text(
-                          "ราคาเฉลี่ย ${item["avg_price"] ?? "-"} บาท",
-                          style: const TextStyle(
-                            color: Colors.green,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
                   ],
                 ),
               ),
@@ -238,25 +225,25 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
       body: isLoading
           ? const Center(child: CircularProgressIndicator())
           : restaurants.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.restaurant_menu, size: 80, color: Colors.grey),
-                      SizedBox(height: 10),
-                      Text(
-                        "ยังไม่มีร้านที่บันทึกไว้",
-                        style: TextStyle(fontSize: 18, color: Colors.grey),
-                      ),
-                    ],
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.restaurant_menu, size: 80, color: Colors.orange),
+                  SizedBox(height: 10),
+                  Text(
+                    "ยังไม่มีร้านที่บันทึกไว้",
+                    style: TextStyle(fontSize: 18, color: Colors.black),
                   ),
-                )
-              : ListView.builder(
-                  itemCount: restaurants.length,
-                  itemBuilder: (context, index) {
-                    return restaurantCard(restaurants[index]);
-                  },
-                ),
+                ],
+              ),
+            )
+          : ListView.builder(
+              itemCount: restaurants.length,
+              itemBuilder: (context, index) {
+                return restaurantCard(restaurants[index]);
+              },
+            ),
     );
   }
 }

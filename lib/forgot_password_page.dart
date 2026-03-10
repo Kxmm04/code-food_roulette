@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:http/http.dart' as http;
 
+import 'reset_password_page.dart';
+
 class ForgotPasswordPage extends StatefulWidget {
   const ForgotPasswordPage({super.key});
 
@@ -10,28 +12,25 @@ class ForgotPasswordPage extends StatefulWidget {
 }
 
 class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
-
   TextEditingController email = TextEditingController();
   TextEditingController otp = TextEditingController();
 
   bool showOTP = false;
 
-  Future sendOTP() async {
-
-    var url = Uri.parse("http://172.24.150.118/food_roulette_api/forgot_password.php");
+  Future<void> sendOTP() async {
+    var url = Uri.parse(
+      "http://172.24.150.118/food_roulette_api/forgot_password.php",
+    );
 
     var res = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
-      body: jsonEncode({
-        "email": email.text
-      }),
+      body: jsonEncode({"email": email.text}),
     );
 
     var data = jsonDecode(res.body);
 
-    if(data["ok"] == true){
-
+    if (data["ok"] == true) {
       setState(() {
         showOTP = true;
       });
@@ -39,176 +38,120 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("ส่ง OTP แล้ว")),
       );
-
-    }else{
-
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(data["message"] ?? "ไม่พบ Email")),
       );
-
     }
   }
 
-  Future verifyOTP() async {
-
-    var url = Uri.parse("http://172.24.150.118/food_roulette_api/verify_otp.php");
+  Future<void> verifyOTP() async {
+    var url = Uri.parse(
+      "http://172.24.150.118/food_roulette_api/verify_otp.php",
+    );
 
     var res = await http.post(
       url,
       headers: {"Content-Type": "application/json"},
       body: jsonEncode({
         "email": email.text,
-        "otp_code": otp.text
+        "otp_code": otp.text,
       }),
     );
 
     var data = jsonDecode(res.body);
 
-    if(data["ok"] == true){
-
+    if (data["ok"] == true) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("OTP ถูกต้อง")),
       );
 
-      
-      Navigator.pushNamed(
-      context,
-      "/reset",
-      arguments: {
-        "email": email.text,
-        "otp": otp.text,
-      },
-    );
+      if (!mounted) return;
 
-    }else{
-
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ResetPasswordPage(
+            email: email.text,
+            otp: otp.text,
+          ),
+        ),
+      );
+    } else {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text("OTP ไม่ถูกต้อง")),
       );
-
     }
   }
 
   @override
-Widget build(BuildContext context) {
-  return Scaffold(
-    body: Container(
-      decoration: const BoxDecoration(
-        gradient: LinearGradient(
-          colors: [
-            Color(0xFFFF7043),
-            Color(0xFFFFA726),
-          ],
-          begin: Alignment.topCenter,
-          end: Alignment.bottomCenter,
+  void dispose() {
+    email.dispose();
+    otp.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              Color(0xFFFF7043),
+              Color(0xFFFFA726),
+            ],
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+          ),
         ),
-      ),
-
-      child: Center(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(25),
-
-          child: Column(
-            children: [
-
-              /// ICON + TITLE
-              const Icon(
-                Icons.lock_reset,
-                size: 90,
-                color: Colors.white,
-              ),
-
-              const SizedBox(height: 10),
-
-              const Text(
-                "ลืมรหัสผ่าน",
-                style: TextStyle(
-                  fontSize: 30,
-                  fontWeight: FontWeight.bold,
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(25),
+            child: Column(
+              children: [
+                const Icon(
+                  Icons.lock_reset,
+                  size: 90,
                   color: Colors.white,
                 ),
-              ),
-
-              const Text(
-                "กรอก Email เพื่อรับ OTP",
-                style: TextStyle(
-                  fontSize: 16,
-                  color: Colors.white70,
+                const SizedBox(height: 10),
+                const Text(
+                  "ลืมรหัสผ่าน",
+                  style: TextStyle(
+                    fontSize: 30,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              ),
-
-              const SizedBox(height: 30),
-
-              /// CARD FORM
-              Container(
-                padding: const EdgeInsets.all(25),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(25),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black.withOpacity(0.15),
-                      blurRadius: 15,
-                      offset: const Offset(0, 8),
-                    )
-                  ],
+                const Text(
+                  "กรอก Email เพื่อรับ OTP",
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: Colors.white70,
+                  ),
                 ),
-
-                child: Column(
-                  children: [
-
-                    /// EMAIL
-                    TextField(
-                      controller: email,
-                      decoration: InputDecoration(
-                        prefixIcon: const Icon(Icons.email),
-                        labelText: "Email",
-                        filled: true,
-                        fillColor: Colors.grey.shade100,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(15),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 20),
-
-                    /// SEND OTP BUTTON
-                    SizedBox(
-                      width: double.infinity,
-                      height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          elevation: 5,
-                          backgroundColor: Colors.deepOrange,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(15),
-                          ),
-                        ),
-                        onPressed: sendOTP,
-                        child: const Text(
-                          "ส่ง OTP",
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ),
-                    ),
-
-                    if (showOTP) ...[
-
-                      const SizedBox(height: 25),
-
-                      /// OTP
+                const SizedBox(height: 30),
+                Container(
+                  padding: const EdgeInsets.all(25),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(25),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.15),
+                        blurRadius: 15,
+                        offset: const Offset(0, 8),
+                      )
+                    ],
+                  ),
+                  child: Column(
+                    children: [
                       TextField(
-                        controller: otp,
-                        keyboardType: TextInputType.number,
+                        controller: email,
                         decoration: InputDecoration(
-                          prefixIcon: const Icon(Icons.lock),
-                          labelText: "กรอกรหัส OTP",
+                          prefixIcon: const Icon(Icons.email),
+                          labelText: "Email",
                           filled: true,
                           fillColor: Colors.grey.shade100,
                           border: OutlineInputBorder(
@@ -217,25 +160,22 @@ Widget build(BuildContext context) {
                           ),
                         ),
                       ),
-
                       const SizedBox(height: 20),
-
-                      /// VERIFY OTP
                       SizedBox(
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             elevation: 5,
-                            backgroundColor: Colors.green,
+                            backgroundColor: Colors.deepOrange,
                             foregroundColor: Colors.white,
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(15),
                             ),
                           ),
-                          onPressed: verifyOTP,
+                          onPressed: sendOTP,
                           child: const Text(
-                            "ยืนยัน OTP",
+                            "ส่ง OTP",
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
@@ -243,33 +183,67 @@ Widget build(BuildContext context) {
                           ),
                         ),
                       ),
-
-                    ]
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 15),
-
-              /// BACK BUTTON
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text(
-                  "กลับไปหน้าเข้าสู่ระบบ",
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
+                      if (showOTP) ...[
+                        const SizedBox(height: 25),
+                        TextField(
+                          controller: otp,
+                          keyboardType: TextInputType.number,
+                          decoration: InputDecoration(
+                            prefixIcon: const Icon(Icons.lock),
+                            labelText: "กรอกรหัส OTP",
+                            filled: true,
+                            fillColor: Colors.grey.shade100,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        SizedBox(
+                          width: double.infinity,
+                          height: 50,
+                          child: ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              elevation: 5,
+                              backgroundColor: Colors.green,
+                              foregroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(15),
+                              ),
+                            ),
+                            onPressed: verifyOTP,
+                            child: const Text(
+                              "ยืนยัน OTP",
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ]
+                    ],
                   ),
                 ),
-              )
-
-            ],
+                const SizedBox(height: 15),
+                TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: const Text(
+                    "กลับไปหน้าเข้าสู่ระบบ",
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                )
+              ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
+    );
+  }
 }
