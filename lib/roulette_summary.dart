@@ -33,6 +33,9 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
   String message = '';
   List<Map<String, dynamic>> matched = [];
 
+  int randomCount = 0;
+  final int maxRandomCount = 3;
+
   Future<String?> _getToken() async {
     final prefs = await SharedPreferences.getInstance();
     return prefs.getString('token');
@@ -79,6 +82,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
       isLoading = true;
       message = '';
       matched = [];
+      randomCount = 0;
     });
 
     try {
@@ -215,6 +219,13 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
   Future<void> randomPick() async {
     if (matched.isEmpty || isRandoming) return;
 
+    if (randomCount >= maxRandomCount) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('คุณสุ่มครบ 3 ครั้งแล้ว')),
+      );
+      return;
+    }
+
     setState(() => isRandoming = true);
 
     final all = <Map<String, dynamic>>[];
@@ -241,6 +252,10 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
     final priceInt = ((m['price'] ?? 0) as num).toInt();
     final distKm = (r['distance_km'] as double);
     final distText = _distanceText(distKm);
+
+    setState(() {
+      randomCount++;
+    });
 
     await _showRandomLoadingDialog();
     await Future.delayed(const Duration(seconds: 2));
@@ -310,7 +325,6 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                       ),
                     ),
                     const SizedBox(height: 18),
-
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -358,7 +372,6 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: 16),
                     _ResultInfoRow(
                       icon: Icons.storefront_rounded,
@@ -371,9 +384,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                       label: 'ระยะทาง',
                       value: distText,
                     ),
-
                     const SizedBox(height: 20),
-
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -398,9 +409,7 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                         ),
                       ),
                     ),
-
                     const SizedBox(height: 10),
-
                     SizedBox(
                       width: double.infinity,
                       height: 50,
@@ -569,16 +578,34 @@ class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
                         ),
                         elevation: 0,
                       ),
-                      onPressed: (matched.isEmpty || isRandoming)
+                      onPressed:
+                          (matched.isEmpty ||
+                              isRandoming ||
+                              randomCount >= maxRandomCount)
                           ? null
                           : () => randomPick(),
                       icon: const Icon(Icons.casino_rounded),
                       label: Text(
-                        isRandoming ? 'กำลังสุ่ม...' : 'สุ่มจากรายการนี้',
+                        isRandoming
+                            ? 'กำลังสุ่ม...'
+                            : randomCount >= maxRandomCount
+                            ? 'สุ่มครบ 3 ครั้งแล้ว'
+                            : 'สุ่มจากรายการนี้',
                         style: const TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 16,
                         ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Center(
+                    child: Text(
+                      'สุ่มไปแล้ว $randomCount / $maxRandomCount ครั้ง',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: Colors.grey.shade600,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ),
