@@ -26,7 +26,7 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
 
   Future<void> fetchMenus() async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/menus_list.php?restaurant_id=${widget.restaurantId}",
+      "http://172.24.148.76/food_roulette_api/menus_list.php?restaurant_id=${widget.restaurantId}",
     );
 
     try {
@@ -53,7 +53,7 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
 
   Future<void> deleteMenu(int menuId) async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/menu_delete.php",
+      "http://172.24.148.76/food_roulette_api/menu_delete.php",
     );
 
     try {
@@ -143,7 +143,7 @@ class _RestaurantMenuPageState extends State<RestaurantMenuPage> {
             ElevatedButton(
               onPressed: () async {
                 var url = Uri.parse(
-                  "http://172.24.150.118/food_roulette_api/menu_update.php",
+                  "http://172.24.148.76/food_roulette_api/menu_update.php",
                 );
 
                 var response = await http.post(

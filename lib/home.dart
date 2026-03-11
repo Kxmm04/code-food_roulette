@@ -54,7 +54,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
     try {
       final url = Uri.parse(
-        "http://172.24.150.118/food_roulette_api/my_saved_restaurants.php",
+        "http://172.24.148.76/food_roulette_api/my_saved_restaurants.php",
       );
 
       final response = await http.get(

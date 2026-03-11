@@ -19,7 +19,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> sendOTP() async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/forgot_password.php",
+      "http://172.24.148.76/food_roulette_api/forgot_password.php",
     );
 
     var res = await http.post(
@@ -47,7 +47,7 @@ class _ForgotPasswordPageState extends State<ForgotPasswordPage> {
 
   Future<void> verifyOTP() async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/verify_otp.php",
+      "http://172.24.148.76/food_roulette_api/verify_otp.php",
     );
 
     var res = await http.post(

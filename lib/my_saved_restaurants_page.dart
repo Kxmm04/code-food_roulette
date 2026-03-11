@@ -19,7 +19,7 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
 
   Future<void> fetchRestaurants() async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/my_saved_restaurants.php",
+      "http://172.24.148.76/food_roulette_api/my_saved_restaurants.php",
     );
 
     try {
@@ -46,7 +46,7 @@ class _MySavedRestaurantsPageState extends State<MySavedRestaurantsPage> {
 
   Future<void> deleteSaved(int savedId) async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/saved_delete.php",
+      "http://172.24.148.76/food_roulette_api/saved_delete.php",
     );
 
     try {

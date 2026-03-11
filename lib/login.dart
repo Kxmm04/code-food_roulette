@@ -19,7 +19,7 @@ class _LoginPageState extends State<LoginPage> {
   final TextEditingController pass = TextEditingController();
 
   Future<void> login() async {
-    var url = Uri.parse("http://172.24.150.118/food_roulette_api/login.php");
+    var url = Uri.parse("http://172.24.148.76/food_roulette_api/login.php");
 
     try {
       var res = await http.post(

@@ -27,7 +27,7 @@ class RouletteSummaryScreen extends StatefulWidget {
 }
 
 class _RouletteSummaryScreenState extends State<RouletteSummaryScreen> {
-  final String baseUrl = 'http://172.24.150.118/food_roulette_api';
+  final String baseUrl = 'http://172.24.148.76/food_roulette_api';
 
   bool isLoading = true;
   bool isRandoming = false;

@@ -28,7 +28,7 @@ class _ResetPasswordPageState extends State<ResetPasswordPage> {
     }
 
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/reset_password.php",
+      "http://172.24.148.76/food_roulette_api/reset_password.php",
     );
 
     try {

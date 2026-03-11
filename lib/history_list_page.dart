@@ -17,7 +17,7 @@ class _HistoryListPageState extends State<HistoryListPage> {
 
   Future<void> fetchHistory() async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/history_list.php",
+      "http://172.24.148.76/food_roulette_api/history_list.php",
     );
 
     try {
@@ -51,7 +51,7 @@ class _HistoryListPageState extends State<HistoryListPage> {
 
   Future<void> deleteHistory(int historyId) async {
     var url = Uri.parse(
-      "http://172.24.150.118/food_roulette_api/history_delete.php",
+      "http://172.24.148.76/food_roulette_api/history_delete.php",
     );
 
     try {
